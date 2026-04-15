@@ -59,10 +59,12 @@ int main(int argc, char *argv[])
         return -1;
     }
 
+    /* получаем ip и порт клиента, выводим их */
     char *client_ip = inet_ntoa(client_addr.sin_addr);
     uint16_t client_port = ntohs(client_addr.sin_port);
     printf("Connected: %s:%d\n", client_ip, client_port);
 
+    /* закрываем дескрипторы */
     close(client_fd);
     close(server_fd);
 }
