@@ -10,8 +10,6 @@
 #include <unistd.h>
 #include <stdio.h>
 
-int handle_socks5_greeting(int client_fd);
-
 int main(int argc, char *argv[])
 {
     /* проверяем, что программа вызвана с указанием порта */
