@@ -23,8 +23,8 @@
 #define REP_SUCCEEDED 0x00 /* Успех */
 #define REP_GEN_SRV_FAILURE 0x01 /* general SOCKS server failure */
 #define REP_CON_NOT_ALLOWED_BY_RULESET 0x02 /* connection not allowed by ruleset */
-#define REP_NETWORK_UNREACHABLE
-#define REP_HOST_UNREACHABLE
+#define REP_NETWORK_UNREACHABLE 0x03
+#define REP_HOST_UNREACHABLE 0x04
 #define REP_CONNECTION_REFUSED 0x05
 #define REP_TTL_EXPIRED 0x06
 #define REP_CMD_NOT_SUPPORTED 0x07 /* Command not supported */
