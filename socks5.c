@@ -103,6 +103,7 @@ encapsulated in the method-dependent encapsulation.
 #include <netdb.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <unistd.h>
 
 #include <string.h>
 #include <stdint.h>
