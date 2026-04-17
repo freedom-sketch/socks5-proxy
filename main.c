@@ -80,10 +80,12 @@ int main(int argc, char *argv[])
             if (handle_socks5_greeting(client_fd) == 0)
                 handle_socks5_request(client_fd);
             
+            /* закрываем для дочернего процесса сокет клиента после окончания ретрансляции и выходим из процесса */
             close(client_fd);
             exit(0);
         }
 
+        /* закрываем сокет клиента для родительского процесса. */
         close(client_fd);
     }
 }
