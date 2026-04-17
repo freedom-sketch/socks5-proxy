@@ -10,14 +10,14 @@
 #define NO_ACCEPTABLE_METHODS 0xFF /* собый случай ответа сервера, когда ни один из предложенных методов не подошел */
 
 /* Команды (Commands) */
-#define CMD_CONNECT 0x01
+#define CMD_CONNECT 0x01 /* Команда подключения */
 #define CMD_BIND 0x02
 #define CMD_UDP_ASSOCIATE 0x03
 
 /* Типы адресов */
-#define ATYPE_IPv4 0x01
-#define ATYPE_DOMAINNAME 0x03
-#define ATYPE_IPv6 0x04
+#define ATYPE_IPv4 0x01 /* IPv4 */
+#define ATYPE_DOMAINNAME 0x03 /* Домен */
+#define ATYPE_IPv6 0x04 /* IPv6 */
 
 /* Ответы (Replies) */
 #define REP_SUCCEEDED 0x00 /* Успех */
