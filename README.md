@@ -4,7 +4,7 @@
 ## ⚡ Быстрый старт
 ### 1. Клонируйте репозиторий
 ```bash
-git clone https://github.com/freedom-sketch/proxy
+git clone https://github.com/freedom-sketch/socks5-proxy
 ```
 ### 2. Скомпилируйте
 ```bash
