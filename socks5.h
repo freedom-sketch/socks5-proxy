@@ -3,6 +3,35 @@
 
 #include <stdint.h>
 
+/* Методы аутенфикации */
+#define METHOD_NO_AUTH_REQ 0x00 /* NO AUTHENTICATION REQUIRED */
+#define METHOD_GSSAPI 0x01
+#define METHOD_USR_PASSWD 0x02
+#define NO_ACCEPTABLE_METHODS 0xFF /* собый случай ответа сервера, когда ни один из предложенных методов не подошел */
+
+/* Команды (Commands) */
+#define CMD_CONNECT 0x01
+#define CMD_BIND 0x02
+#define CMD_UDP_ASSOCIATE 0x03
+
+/* Типы адресов */
+#define ATYPE_IPv4 0x01
+#define ATYPE_DOMAINNAME 0x03
+#define ATYPE_IPv6 0x04
+
+/* Ответы (Replies) */
+#define RPL_SUCCEEDED 0x00
+#define RPL_GEN_SRV_FAILURE 0x01 /* general SOCKS server failure */
+#define RPL_CON_NOT_ALLOWED_BY_RULESET 0x02 /* connection not allowed by ruleset */
+#define RPL_NETWORK_UNREACHABLE
+#define RPL_HOST_UNREACHABLE
+#define RPL_CONNECTION_REFUSED 0x05
+#define RPL_TTL_EXPIRED 0x06
+#define RPL_CMD_NOT_SUPPORTED 0x07 /* Command not supported */
+#define RPL_ATYPE_NOT_SUPPORTED 0x08 /* Address type not supported */
+
+#define RSV 0x00; /* Зарезервированный байт */
+
 struct __attribute__((packed)) socks5_header {
     uint8_t ver;
     uint8_t cmd;
@@ -11,5 +40,6 @@ struct __attribute__((packed)) socks5_header {
 };
 
 int handle_socks5_greeting(int client_fd);
+int handle_socks5_request(int client_fd);
 
 #endif /* SOCKS5_H */
