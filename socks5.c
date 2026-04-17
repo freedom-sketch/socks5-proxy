@@ -238,7 +238,7 @@ void start_relay(int client_fd, int remote_fd)
                 ssize_t n = recv(source_fd, buffer, sizeof(buffer), 0);
                 if (n <= 0) return;
 
-                if (send(dest_fd, buffer, sizeof(buffer), 0) <= 0) return;
+                if (send(dest_fd, buffer, n, 0) <= 0) return;
             }
         }
     }
