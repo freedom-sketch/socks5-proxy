@@ -9,7 +9,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <getopt.h>
 #include <stdio.h>
+
+int debug_info = 0;
+uint16_t server_port = 1080;
 
 int main(int argc, char *argv[])
 {
@@ -17,10 +21,25 @@ int main(int argc, char *argv[])
     удаляться после отработки, не попадая в состояние defunct */
     signal(SIGCHLD, SIG_IGN);
 
-    /* проверяем, что программа вызвана с указанием порта */
-    if (argc < 2) {
-        fprintf(stderr, "Error. Usage: %s <port>\n", argv[0]);
-        return -1;
+    int opt;
+    while ((opt = getopt(argc, argv, "p:d")) != -1) {
+        switch (opt) {
+            case 'p':
+                server_port = atoi(optarg);
+                if (server_port <= 0 || server_port > 65535) {
+                    fprintf(stderr, "Invalid port number: %s\n", optarg);
+                    return -1;
+                }
+                printf("Port %d selected\n", server_port);
+                break;
+            case 'd':
+                debug_info = 1;
+                printf("Debug info is enabled\n");
+                break;
+            case '?':
+                fprintf(stderr, "Usage: %s [-p port] [-d]\n", argv[0]);
+                return -1;
+        }
     }
 
     /* создаем сокет сервера и записываем его дескриптор */
@@ -30,8 +49,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    int opt = 1;
-    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+    int socket_opt = 1;
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &socket_opt, sizeof(socket_opt)) < 0) {
         perror("setsockopt failed");
     }
 
@@ -41,7 +60,7 @@ int main(int argc, char *argv[])
 
     server_addr.sin_family = AF_INET; /* семейство адресов IPv4 */
     server_addr.sin_addr.s_addr = INADDR_ANY; /* любой сетевой интерфейс */
-    server_addr.sin_port = htons(atoi(argv[1])); /* перевод номера порта из формата хоста в формат сети (LE->BE) */
+    server_addr.sin_port = htons(server_port); /* перевод номера порта из формата хоста в формат сети (LE->BE) */
 
     /* связываем дескриптор сокета с локальным адресом */
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
@@ -54,7 +73,7 @@ int main(int argc, char *argv[])
         perror("listen failed");
         return -1;
     }
-    printf("Server listening on port %s...\n", argv[1]);
+    printf("Server listening on port %d...\n", server_port);
 
     /* создаем дескриптор для клиента */
     struct sockaddr_in client_addr;

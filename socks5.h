@@ -32,12 +32,21 @@
 
 #define RSV 0x00 /* Зарезервированный байт */
 
+/* Цвета */
+#define RESET "\033[0m" /* Сброс цвета */
+#define BLUE_TXT "\033[34m" /* Синий цвет текста */
+#define GRN_TXT "\033[32m" /* Зеленый увет текста */
+#define BOLD_TXT "\033[1m" /* Жирный текст */
+
 struct __attribute__((packed)) socks5_header {
     uint8_t ver;
     uint8_t cmd;
     uint8_t rsv;
     uint8_t atyp;
 };
+
+extern int debug_info;
+extern uint16_t server_port;
 
 int handle_socks5_greeting(int client_fd);
 int handle_socks5_request(int client_fd);

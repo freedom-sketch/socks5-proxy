@@ -140,13 +140,21 @@ int handle_socks5_greeting(int client_fd)
 
     if (!auth_ok) {
         uint8_t resp[2] = {0x05, NO_ACCEPTABLE_METHODS};
+
+        if (debug_info)
+            printf("AUTH:\n\tVER: %#x\n\tMETHOD: %#x\n", resp[0], resp[1]);
+
         send(client_fd, resp, 2, 0);
         return -1;
     }
 
     uint8_t resp[2] = {0x05, METHOD_NO_AUTH_REQ};
-    if (send(client_fd, resp, 2, 0) < 2)
+    if (send(client_fd, resp, 2, 0) < 2) {
+        if (debug_info)
+            printf("AUTH:\n\tVER: %#x\n\tMETHOD: %#x\n", resp[0], resp[1]);
+        
         return -1;
+    }
 
     return 0;
 }
@@ -157,6 +165,12 @@ int handle_socks5_request(int client_fd)
 
     if (recv(client_fd, &hdr, sizeof(hdr), 0) < (ssize_t)(sizeof(hdr)))
         return -1;
+    
+    if (debug_info) {
+        printf("REQUEST:\n\t");
+        printf("VER: %#x\n\tCMD: %#x\n\tRSV: %#x\n\tATYP: %#x\n", 
+        hdr.ver, hdr.cmd, hdr.rsv, hdr.atyp);
+    }
 
     if (hdr.ver != 0x05 || hdr.cmd != CMD_CONNECT)
         return -1;
@@ -168,11 +182,14 @@ int handle_socks5_request(int client_fd)
         recv(client_fd, ipv4, sizeof(ipv4), 0);
         recv(client_fd, &port, sizeof(port), 0);
 
+        if (debug_info)
+            printf("\tDST.ADDR: %d.%d.%d.%d\n\tDST.PORT: %d\n", ipv4[0], ipv4[1], ipv4[2], ipv4[3], ntohs(port));
+
         int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
         if (remote_fd < 0) return -1;
 
         struct sockaddr_in target_addr;
-        memset(&target_addr, 0,sizeof(target_addr));
+        memset(&target_addr, 0, sizeof(target_addr));
 
         target_addr.sin_family = AF_INET;
         target_addr.sin_port = port;
@@ -194,9 +211,17 @@ int handle_socks5_request(int client_fd)
             reply[1] = REP_HOST_UNREACHABLE;
             send(client_fd, reply, sizeof(reply), 0);
             close(remote_fd);
+
+            if (debug_info)
+                printf("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
             return -1;
         } else {
             send(client_fd, reply, sizeof(reply), 0);
+
+            if (debug_info)
+                printf("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
             start_relay(client_fd, remote_fd);
             close(remote_fd);
         }
@@ -212,6 +237,9 @@ int handle_socks5_request(int client_fd)
         uint16_t port;
         recv(client_fd, &port, sizeof(port), 0);
 
+        if (debug_info)
+            printf("\tDST.ADDR: %s\n\tDST.PORT: %d\n", domain, ntohs(port));
+
         char port_str[6];
         snprintf(port_str, sizeof(port_str), "%d", ntohs(port));
     } else
@@ -222,6 +250,9 @@ int handle_socks5_request(int client_fd)
 
 void start_relay(int client_fd, int remote_fd)
 {
+    if (debug_info)
+        printf("\n" GRN_TXT "RELAY STARTED" RESET "\n");
+    
     struct pollfd fds[2];
 
     fds[0].fd = client_fd;
@@ -246,6 +277,14 @@ void start_relay(int client_fd, int remote_fd)
 
                 ssize_t n = recv(source_fd, buffer, sizeof(buffer), 0);
                 if (n <= 0) return;
+
+                if (debug_info) {
+                    char printf_buffer[10241];
+                    memcpy(printf_buffer, buffer, n);
+                    printf_buffer[n+1] = '\0';
+                    printf(BOLD_TXT "\nCHANGES IN SOCKETS:\n" RESET);
+                    printf("source fd: %d | dest fd: %d\nbuffer:\n" BLUE_TXT "%s" RESET, source_fd, dest_fd, printf_buffer);
+                }
 
                 if (send(dest_fd, buffer, n, 0) <= 0) return;
             }
