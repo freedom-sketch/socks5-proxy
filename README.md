@@ -13,9 +13,10 @@ cc main.c socks5.c -o a.out
 ```
 ### 3. Запустите
 ```bash
-./a.out <порт>
+./a.out [-p port] [-d]
 ```
+-d - включить debug info
 ### 4. Проверьте
 ```bash
-curl -v --socks5 127.0.0.1:<порт> 1.1.1.1
+curl -v --socks5 127.0.0.1:<port> 1.1.1.1
 ```
