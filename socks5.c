@@ -233,7 +233,7 @@ int handle_socks5_request(int client_fd)
 
         if (len == 0 || len > 255) return -1;
 
-        char domain[256];
+        char domain[257]; /* 0-255 (диапазон 1 байта) под размер домена и 1 байте под \0 */
         recv(client_fd, domain, (size_t)len, 0);
         domain[len] = '\0';
 
