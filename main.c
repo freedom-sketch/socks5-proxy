@@ -55,12 +55,11 @@ int main(int argc, char *argv[])
     }
 
     /* создаем структуру для хранения локального IPv4 адреса */
-    struct sockaddr_in server_addr;
-    memset(&server_addr, 0, sizeof(server_addr));
-
-    server_addr.sin_family = AF_INET; /* семейство адресов IPv4 */
-    server_addr.sin_addr.s_addr = INADDR_ANY; /* любой сетевой интерфейс */
-    server_addr.sin_port = htons(server_port); /* перевод номера порта из формата хоста в формат сети (LE->BE) */
+    struct sockaddr_in server_addr = {
+        .sin_family = AF_INET, /* семейство адресов IPv4 */
+        .sin_addr.s_addr = INADDR_ANY, /* любой сетевой интерфейс */
+        .sin_port = htons(server_port) /* перевод номера порта из формата хоста в формат сети */
+    };
 
     /* связываем дескриптор сокета с локальным адресом */
     if (bind(server_fd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
