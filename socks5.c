@@ -196,9 +196,8 @@ int handle_socks5_request(int client_fd)
         target_addr.sin_port = port;
         memcpy(&target_addr.sin_addr.s_addr, ipv4, 4);
 
-        /* По стандарту в ответе (массив reply) необходимо указывать локальные адрес и порт, с которых
+        /* По стандарту в ответе необходимо указывать локальные адрес и порт, с которых
         сервер вышел в сеть, но я просто забью все нулями и не буду указывать эти параметры.
-
         Память выделяется на 10 байт (reply[10]) т.к. VER, REP, RSV, ATYP всегда равны 1 байту,
         BND.PORT - всегда 2 байта, а размер BND.ADDR в нашем случае известен, так как у нас IPv4 (4 байта)*/
         uint8_t reply[10] = {0};
@@ -230,10 +229,9 @@ int handle_socks5_request(int client_fd)
     } else if (hdr.atyp == ATYPE_DOMAINNAME) {
         uint8_t len;
         recv(client_fd, &len, sizeof(len), 0);
+        if (len == 0) return -1;
 
-        if (len == 0 || len > 255) return -1;
-
-        char domain[257]; /* 0-255 (диапазон 1 байта) под размер домена и 1 байте под \0 */
+        char domain[257]; /* 0-255 под размер домена и 1 байте под \0 */
         recv(client_fd, domain, (size_t)len, 0);
         domain[len] = '\0';
 
@@ -291,6 +289,7 @@ int handle_socks5_request(int client_fd)
         return 0;
 }
 
+/* TODO: ПЕРЕПИСАТЬ!!!!!!!! Память под массив указателей не выделяется в куче!!!!!!!!
 struct in_addr **domain_to_ipv4_list(const char *hostname)
 {
     struct hostent *he;
@@ -301,6 +300,16 @@ struct in_addr **domain_to_ipv4_list(const char *hostname)
     }
 
     return (struct in_addr **)he->h_addr_list;
+}
+*/
+
+void form_default_reply(uint8_t rpl[10])
+{
+    memset(rpl, 0, sizeof(rpl));
+    rpl[0] = 0x05;
+    rpl[1] = REP_SUCCEEDED;
+    rpl[2] = RSV;
+    rpl[3] = ATYPE_IPv4;
 }
 
 void start_relay(int client_fd, int remote_fd)
