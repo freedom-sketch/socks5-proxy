@@ -171,57 +171,17 @@ int handle_socks5_request(int client_fd)
         return -1;
     
     if (hdr.atyp == ATYPE_IPv4) {
-        uint8_t ipv4[4];
-        uint16_t port;
-
-        recv(client_fd, ipv4, sizeof(ipv4), 0);
-        recv(client_fd, &port, sizeof(port), 0);
-
-        LOG("\tDST.ADDR: %d.%d.%d.%d\n\tDST.PORT: %d\n", ipv4[0], ipv4[1], ipv4[2], ipv4[3], ntohs(port));
-
-        int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (remote_fd < 0) return -1;
-
-        struct sockaddr_in target_addr;
-        memset(&target_addr, 0, sizeof(target_addr));
-
-        target_addr.sin_family = AF_INET;
-        target_addr.sin_port = port;
-        memcpy(&target_addr.sin_addr.s_addr, ipv4, 4);
-
-        /* По стандарту в ответе необходимо указывать локальные адрес и порт, с которых
-        сервер вышел в сеть, но я просто забью все нулями и не буду указывать эти параметры.
-        Память выделяется на 10 байт (reply[10]) т.к. VER, REP, RSV, ATYP всегда равны 1 байту,
-        BND.PORT - всегда 2 байта, а размер BND.ADDR в нашем случае известен, так как у нас IPv4 (4 байта)*/
-        uint8_t reply[10] = {0};
-
-        reply[0] = 0x05;
-        reply[1] = REP_SUCCEEDED;
-        reply[2] = RSV;
-        reply[3] = ATYPE_IPv4;
-
-        if (connect(remote_fd, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0) {
-            reply[1] = REP_HOST_UNREACHABLE;
-            send(client_fd, reply, sizeof(reply), 0);
-            close(remote_fd);
-
-            LOG("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+        if (process_ipv4_request(client_fd) < 0)
             return -1;
-        } else {
-            send(client_fd, reply, sizeof(reply), 0);
-
-            LOG("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
-
-            start_relay(client_fd, remote_fd);
-            close(remote_fd);
-        }
 
     } else if (hdr.atyp == ATYPE_DOMAINNAME) {
+        /*
+        TODO: ВЫНЕСТИ В ОТДУЛЬНУЮ ФУНКЦИЮ, ДОПИСАТЬ
         uint8_t len;
         recv(client_fd, &len, sizeof(len), 0);
         if (len == 0) return -1;
 
-        char domain[257]; /* 0-255 под размер домена и 1 байте под \0 */
+        char domain[257];  0-255 под размер домена и 1 байте под \0
         recv(client_fd, domain, (size_t)len, 0);
         domain[len] = '\0';
 
@@ -269,11 +229,11 @@ int handle_socks5_request(int client_fd)
             start_relay(client_fd, remote_fd);
             close(remote_fd);
         }
-
+        */
     } else
         return -1;
     
-        return 0;
+    return 0;
 }
 
 /* TODO: ПЕРЕПИСАТЬ!!!!!!!! Память под массив указателей не выделяется в куче!!!!!!!!
@@ -290,7 +250,55 @@ struct in_addr **domain_to_ipv4_list(const char *hostname)
 }
 */
 
-void form_default_reply(uint8_t rpl[10])
+int process_ipv4_request(int client_fd)
+{
+    uint8_t ip[4]; /* создаем буфер на 4 байта под IP адрес */
+    uint16_t port; /* буфер на 2 байта под порт */
+
+    /* читаем из клиентского сокета первые 6 байт. 4 под IP и 2 под порт */
+    recv(client_fd, ip, sizeof(4), 0);
+    recv(client_fd, &port, sizeof(port), 0);
+
+    LOG("\tDST.ADDR: %d.%d.%d.%d\n\tDST.PORT: %d\n", ip[0], ip[1], ip[2], ip[3], ntohs(port));
+
+    /* создаем сокет с полножуплексной передачей семейства IPv4 для целевого хоста */
+    int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (remote_fd < 0) return -1;
+
+    /* создаем и заполняем структуру информации об IPv4 сокете */
+    struct sockaddr_in target_addr = {
+        .sin_family = AF_INET,
+        .sin_addr.s_addr = htonl(*(in_addr_t *)ip),
+        .sin_port = port
+    };
+
+    /* VER, REP, RSV, ATYP = 1 байт, BND.PORT = 2 байта, BND.ADDR = 4 байта (IPv4)
+    1 * 4 + 2 + 4 = 10 байт */
+    uint8_t reply[10] = {0};
+    form_default_reply(reply);
+
+    /* пытаемся установить соединение */
+    if (connect(remote_fd, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0) {
+        /* в случае неудачи, меняем REP */
+        reply[1] = REP_HOST_UNREACHABLE;
+        /* отправляем ответ и закрываем сокет целевого хоста */
+        send(client_fd, reply, sizeof(reply), 0);
+        LOG("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
+        close(remote_fd);
+        return -1;            
+    }
+
+    /* в случае удачи отправляем ответ и начинаем проксировать трафик */
+    send(client_fd, reply, sizeof(reply), 0);
+
+    LOG("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
+    start_relay(client_fd, remote_fd);
+    close(remote_fd);
+}
+
+void form_default_reply(uint8_t *rpl)
 {
     memset(rpl, 0, sizeof(rpl));
     rpl[0] = 0x05;

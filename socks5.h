@@ -55,6 +55,9 @@ struct __attribute__((packed)) socks5_header {
 int handle_socks5_greeting(int client_fd);
 int handle_socks5_request(int client_fd);
 
+/* Обрабатывает запрос с ATYPE = IPv4 */
+int process_ipv4_request(int client_fd);
+
 struct in_addr **domain_to_ipv4_list(const char *hostname);
 
 /* Формирует дефолтный байтовый массив ответа. Переданный массив должен быть 10 байт.
