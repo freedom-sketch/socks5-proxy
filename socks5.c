@@ -104,6 +104,7 @@ encapsulated in the method-dependent encapsulation.
 #include <arpa/inet.h>
 #include <poll.h>
 #include <unistd.h>
+#include <netdb.h>
 
 #include <string.h>
 #include <stdint.h>
@@ -230,6 +231,8 @@ int handle_socks5_request(int client_fd)
         uint8_t len;
         recv(client_fd, &len, sizeof(len), 0);
 
+        if (len == 0 || len > 255) return -1;
+
         char domain[256];
         recv(client_fd, domain, (size_t)len, 0);
         domain[len] = '\0';
@@ -240,12 +243,64 @@ int handle_socks5_request(int client_fd)
         if (debug_info)
             printf("\tDST.ADDR: %s\n\tDST.PORT: %d\n", domain, ntohs(port));
 
-        char port_str[6];
-        snprintf(port_str, sizeof(port_str), "%d", ntohs(port));
+        struct in_addr **in_addr_list = domain_to_ipv4_list(domain);
+        if (in_addr_list == NULL) return -1;
+        if (in_addr_list[0] == NULL) return -1;
+
+        int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
+        if (remote_fd < 0) return -1;
+
+        struct sockaddr_in target_addr;
+        memset(&target_addr, 0, sizeof(target_addr));
+
+        target_addr.sin_family = AF_INET;
+        target_addr.sin_port = port;
+        target_addr.sin_addr = *in_addr_list[0];
+
+        uint8_t reply[7+len];
+        memset(reply, 0, sizeof(reply));
+
+        reply[0] = 0x05;
+        reply[1] = REP_SUCCEEDED;
+        reply[2] = RSV;
+        reply[3] = ATYPE_DOMAINNAME;
+        reply[4] = len;
+
+        if (connect(remote_fd, (struct sockaddr *)&target_addr, sizeof(target_addr)) < 0) {
+            reply[1] = REP_HOST_UNREACHABLE;
+            send(client_fd, reply, sizeof(reply), 0);
+            close(remote_fd);
+
+            if (debug_info)
+                printf("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
+            return -1;
+        } else {
+            send(client_fd, reply, sizeof(reply), 0);
+
+            if (debug_info)
+                printf("REPLY: \n\tREP: %#x\n\tRSV: %#x\n\tATYPE: %#x\n", reply[1], reply[2], reply[3]);
+
+            start_relay(client_fd, remote_fd);
+            close(remote_fd);
+        }
+
     } else
         return -1;
     
         return 0;
+}
+
+struct in_addr **domain_to_ipv4_list(const char *hostname)
+{
+    struct hostent *he;
+
+    if ((he = gethostbyname(hostname)) == NULL) {
+        perror("gethostbyname");
+        return NULL;
+    }
+
+    return (struct in_addr **)he->h_addr_list;
 }
 
 void start_relay(int client_fd, int remote_fd)

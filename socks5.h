@@ -50,6 +50,7 @@ extern uint16_t server_port;
 
 int handle_socks5_greeting(int client_fd);
 int handle_socks5_request(int client_fd);
+struct in_addr **domain_to_ipv4_list(const char *hostname);
 void start_relay(int client_fd, int remote_fd);
 
 #endif /* SOCKS5_H */
