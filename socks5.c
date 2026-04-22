@@ -32,8 +32,10 @@ int handle_socks5_request(int client_fd);
 
 /* Формирует пакет ответа на 10 байт: VER=0x05; REP=0x00; ATYPE=0x01; BND.ADDR и BND.PORT обнуляет */
 static void form_default_reply(uint8_t *rpl);
-/* Обрабатывает запрос с ATYPE = IPv4 */
+/* Обрабатывает запрос с ATYPE = 0x01 */
 static int process_ipv4_request(int client_fd);
+/* Обрабатывает запрос с ATYPE = 0x03 */
+static int process_domainname_request(int client_fd);
 /* Запускает двустороннюю ретрансляцию данных между клиентом и целевым хостом*/
 static void start_relay(int client_fd, int remote_fd);
 
