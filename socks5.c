@@ -96,6 +96,7 @@ encapsulated in the method-dependent encapsulation.
 */
 
 #include "socks5.h"
+#include "fmt.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
