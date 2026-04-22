@@ -210,7 +210,10 @@ static int process_ipv4_request(int client_fd)
     close(remote_fd);
 }
 
-/* запускает проксирование трафика между клиентом и целевым хостом */
+/* Запускает двустороннюю ретрансляцию данных между клиентом и целевым хостом.
+Использует poll() для мониторинга изменений в обоих сокетах. 
+client_fd - дескриптор сокета клиента.
+remote_fd - дескриптор целевого хоста. */
 static void start_relay(int client_fd, int remote_fd)
 {
     LOG(GRN_TXT "\nRELAY STARTED\n" RESET);
@@ -255,7 +258,7 @@ static void start_relay(int client_fd, int remote_fd)
 }
 
 
-/* Формирует дефолтный байтовый массив ответа. Переданный массив должен быть 10 байт.
+/* Формирует 10-байтовый пакет ответа по умолчанию:
 VER = 0x05
 REP = 0x00 (succeeded)
 RSV = 0x00
