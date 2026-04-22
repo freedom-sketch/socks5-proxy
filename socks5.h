@@ -1,3 +1,14 @@
+/*
+ * socks5.h - Определение интерфейса реализации протокола SOCKS5
+ * 
+ * Cтандарт SOCKS5:
+ * 
+ * RFC1928: https://datatracker.ietf.org/doc/html/rfc1928
+ * RFC1929: https://datatracker.ietf.org/doc/html/rfc1929
+ * RFC1961: https://datatracker.ietf.org/doc/html/rfc1961
+ * RFC3089: https://datatracker.ietf.org/doc/html/rfc3089
+*/
+
 #ifndef SOCKS5_H
 #define SOCKS5_H
 

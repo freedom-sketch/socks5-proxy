@@ -1,3 +1,14 @@
+/*
+ * main.c - Реализация SOCKS5 сервера
+ * 
+ Cтандарт SOCKS5:
+ * 
+ * RFC1928: https://datatracker.ietf.org/doc/html/rfc1928
+ * RFC1929: https://datatracker.ietf.org/doc/html/rfc1929
+ * RFC1961: https://datatracker.ietf.org/doc/html/rfc1961
+ * RFC3089: https://datatracker.ietf.org/doc/html/rfc3089
+*/
+
 #include "socks5.h"
 
 #include <sys/socket.h>
