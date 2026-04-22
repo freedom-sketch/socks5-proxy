@@ -258,7 +258,7 @@ static int process_ipv4_request(int client_fd)
     uint16_t port; /* буфер на 2 байта под порт */
 
     /* читаем из клиентского сокета первые 6 байт. 4 под IP и 2 под порт */
-    recv(client_fd, ip, sizeof(4), 0);
+    recv(client_fd, ip, sizeof(ip), 0);
     recv(client_fd, &port, sizeof(port), 0);
 
     LOG("\tDST.ADDR: %d.%d.%d.%d\n\tDST.PORT: %d\n", ip[0], ip[1], ip[2], ip[3], ntohs(port));
@@ -353,7 +353,7 @@ ATYPE = 0x01 (IPv4)
 BND.ADDR и BND.PORT заполняет нулями */
 static void form_default_reply(uint8_t *rpl)
 {
-    memset(rpl, 0, sizeof(rpl));
+    memset(rpl, 0, rpl);
     rpl[0] = 0x05;
     rpl[1] = REP_SUCCEEDED;
     rpl[2] = RSV;
