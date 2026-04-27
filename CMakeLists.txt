@@ -13,5 +13,5 @@ elseif(UNIX)
     set(PLATFORM_LIBS "")
 endif()
 
-add_executable(socks5_srv ${SOURCES}   "libs/cJSON/cJSON.c" "libs/cJSON/cJSON.h")
+add_executable(socks5_srv ${SOURCES}   "libs/cJSON/cJSON.c" "libs/cJSON/cJSON.h" "src/config.c" "include/config.h")
 target_link_libraries(socks5_srv ${PLATFORM_LIBS})
