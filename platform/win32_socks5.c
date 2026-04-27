@@ -18,20 +18,23 @@
 
 #include <stdio.h>
 
-
 int proxy_init()
 {
 	WSADATA ws_data = {0};
 
 	int err_stat = WSAStartup(MAKEWORD(2, 2), &ws_data);
 	if (err_stat != 0) {
-		printf("Error WinSock version initializaion #%d\n", WSAGetLastError());
+		fprintf(stderr, "Error WinSock version initializaion #%d\n", WSAGetLastError());
 		return -1;
 	}
-	printf("WinSock initialization is OK\n");
+	LOG("WinSock initialization is OK\n");
 
 	SOCKET server_socket = socket(AF_INET, SOCK_STREAM, 0);
 	if (server_socket == INVALID_SOCKET) {
-		printf("Error initialization socket #%d\n", WSAGetLastError());
+		fprintf(stderr, "Error initialization socket #%d\n", WSAGetLastError());
+		closesocket(server_socket);
+		WSACleanup();
+		return -1;
 	}
+	LOG("Server socket initialization is OK\n");
 }

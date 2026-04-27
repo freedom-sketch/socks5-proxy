@@ -125,7 +125,11 @@ static int process_ipv4_request(int client_fd)
 
     /* создаем сокет с полножуплексной передачей семейства IPv4 для целевого хоста */
     int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (remote_fd < 0) return -1;
+    if (remote_fd < 0) {
+        perror("Error initialization socket #%d\n");
+        return -1;
+    }
+    LOG("Remote socket (#%d) initialization is OK\n", remote_fd);
 
     /* создаем и заполняем структуру информации об IPv4 сокете */
     struct sockaddr_in target_addr = {
@@ -178,7 +182,11 @@ static int process_domainname_request(int client_fd)
     LOG("\tDST.ADDR: %s\n\tDST.PORT: %d\n", domain, ntohs(port));
 
     int remote_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (remote_fd < 0) return -1;
+    if (remote_fd < 0) {
+        perror("Error initialization socket #%d");
+        return -1;
+    }
+    LOG("Remote socket (#%d) initialization is OK\n", remote_fd);
 
     struct addrinfo hints = {
         .ai_family = AF_INET,
