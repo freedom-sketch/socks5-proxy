@@ -9,8 +9,8 @@
  * RFC3089: https://datatracker.ietf.org/doc/html/rfc3089
 */
 
-#include "../../include/socks5.h"
-#include "../../include/fmt.h"
+#include "include/socks5.h"
+#include "include/fmt.h"
 
 #include <WinSock2.h>
 #include <WS2tcpip.h>
