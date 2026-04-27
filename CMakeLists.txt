@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Socks5 LANGUAGES C)
+project(socks5_server LANGUAGES C)
 
 include_directories(${CMAKE_SOURCE_DIR})
 
@@ -13,5 +13,5 @@ elseif(UNIX)
     set(PLATFORM_LIBS "")
 endif()
 
-add_executable(socks5_app ${SOURCES})
-target_link_libraries(socks5_app ${PLATFORM_LIBS})
+add_executable(socks5_srv ${SOURCES})
+target_link_libraries(socks5_srv ${PLATFORM_LIBS})
