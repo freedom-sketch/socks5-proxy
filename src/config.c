@@ -60,7 +60,7 @@ int init_config(const char *path)
 			free(data);
 			return -1;
 		}
-		main_config.port = (uint16_t)p;
+		main_config.port = htons((uint16_t)p);
 	} else fprintf(stderr, "Port must be a number\n");
 
 	cJSON* debug_info_json = cJSON_GetObjectItemCaseSensitive(json, "debug_info");

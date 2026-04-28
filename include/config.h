@@ -18,7 +18,7 @@ struct config_t {
 	uint16_t port;
 };
 
-/* Инициализирует конфиг с помощью cJSON */
+/* Инициализирует глобальный конфиг с помощью cJSON. */
 int init_config(const char* path);
 /* Заполняет cfg данными из main_config */
 void fill_config(struct config_t* cfg);
