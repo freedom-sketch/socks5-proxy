@@ -10,6 +10,7 @@
 */
 
 #include "include/socks5.h"
+#include "include/config.h"
 #include "include/fmt.h"
 
 #include <WinSock2.h>
@@ -18,10 +19,9 @@
 
 #include <stdio.h>
 
-int proxy_init()
+int proxy_init(struct config_t *cfg)
 {
 	WSADATA ws_data = {0};
-
 	int err_stat = WSAStartup(MAKEWORD(2, 2), &ws_data);
 	if (err_stat != 0) {
 		fprintf(stderr, "Error WinSock version initializaion #%d\n", WSAGetLastError());
@@ -37,4 +37,47 @@ int proxy_init()
 		return -1;
 	}
 	LOG("Server socket initialization is OK\n");
+
+	int socket_opt = 1;
+	if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &socket_opt, sizeof(socket_opt)) != 0) {
+		fprintf(stderr, "setsockopt failed\n");
+	}
+
+	struct sockaddr_in server_addr = {
+		.sin_family = AF_INET,
+		.sin_addr = cfg->listen_addr,
+		.sin_port = cfg->port
+	};
+
+	if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) != 0) {
+		fprintf(stderr, "Error Socket binding to server info: %d\n", WSAGetLastError());
+		closesocket(server_socket);
+		WSACleanup();
+		return -1;
+	};
+	LOG("Binding socket to Server info is OK\n");
+
+	err_stat = listen(server_socket, SOMAXCONN);
+	if (err_stat != 0) {
+		fprintf(stderr, "Can't start to listen to. #%d\n", WSAGetLastError());
+		closesocket(server_socket);
+		WSACleanup();
+		return -1;
+	}
+	printf("Listening...\n");
+
+	struct sockaddr_in client_addr = {0};
+	socklen_t client_addr_len = sizeof(client_addr);
+
+	while (1) {
+		SOCKET client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &client_addr_len);
+		if (client_socket == INVALID_SOCKET) {
+			fprintf(stderr, "Client detected, but can't connect to a client. #%d\n", WSAGetLastError());
+			closesocket(server_socket);
+			closesocket(client_socket);
+			WSACleanup();
+			return -1;
+		}
+		LOG("Connection to a client established successfully\n");
+	}
 }
