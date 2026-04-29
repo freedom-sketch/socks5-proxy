@@ -19,6 +19,11 @@
 
 #include <stdio.h>
 
+/* Создает сокет, биндит его к local_addr и возвращает дескриптор */
+static SOCKET init_socket(int af, int type, int protocol, int reuse_addr, struct sockaddr_in* local_addr);
+/* Инициализирует серверный сокет в соответствии с конфигом и начинает прослушку */
+int proxy_init(struct config_t* cfg);
+
 int proxy_init(struct config_t *cfg)
 {
 	WSADATA ws_data = {0};
@@ -29,33 +34,19 @@ int proxy_init(struct config_t *cfg)
 	}
 	LOG("WinSock initialization is OK\n");
 
-	SOCKET server_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (server_socket == INVALID_SOCKET) {
-		fprintf(stderr, "Error initialization socket #%d\n", WSAGetLastError());
-		closesocket(server_socket);
-		WSACleanup();
-		return -1;
-	}
-	LOG("Server socket initialization is OK\n");
-
-	int socket_opt = 1;
-	if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &socket_opt, sizeof(socket_opt)) != 0) {
-		fprintf(stderr, "setsockopt failed\n");
-	}
-
 	struct sockaddr_in server_addr = {
 		.sin_family = AF_INET,
 		.sin_addr = cfg->listen_addr,
 		.sin_port = cfg->port
 	};
 
-	if (bind(server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) != 0) {
-		fprintf(stderr, "Error Socket binding to server info: %d\n", WSAGetLastError());
-		closesocket(server_socket);
+	SOCKET server_socket = init_socket(AF_INET, SOCK_STREAM, 0, 1, &server_addr);
+	if (server_socket == NULL) {
+		fprintf(stderr, "Error initialization server socket #%d\n", WSAGetLastError());
 		WSACleanup();
 		return -1;
-	};
-	LOG("Binding socket to Server info is OK\n");
+	}
+	LOG("Server socket initialization is OK\n");
 
 	err_stat = listen(server_socket, SOMAXCONN);
 	if (err_stat != 0) {
@@ -80,4 +71,26 @@ int proxy_init(struct config_t *cfg)
 		}
 		LOG("Connection to a client established successfully\n");
 	}
+}
+
+static SOCKET init_socket(int af, int type, int protocol, int reuse_addr, struct sockaddr_in *local_addr)
+{
+	SOCKET socket_ = socket(af, type, protocol);
+	if (socket_ == INVALID_SOCKET) {
+		closesocket(socket_);
+		return NULL;
+	}
+
+	if (reuse_addr) {
+		int socket_opt = 1;
+		if (setsockopt(socket_, SOL_SOCKET, SO_REUSEADDR, &socket_opt, sizeof(socket_opt)) != 0)
+			return NULL;
+	}
+
+	if (bind(socket_, (struct sockaddr*)local_addr, sizeof(socket_)) != 0) {
+		closesocket(socket_);
+		return NULL;
+	};
+
+	return socket_;
 }
