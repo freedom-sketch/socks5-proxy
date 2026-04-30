@@ -44,16 +44,14 @@ int handle_socks5_greeting(int client_fd)
     uint8_t header[2];
     ssize_t n;
 
-    n = recv(client_fd, header, 2, 0);
-    if (n < 2)
-        return -1;
+    n = recv(client_fd, header, sizeof(header), 0);
+    if (n < 2) return -1;
 
     uint8_t ver = header[0];
     uint8_t n_methods = header[1];
 
     if (ver != 0x05) return -1;
-    if (n_methods < 1 || n_methods > 255)
-        return -1;
+    if (n_methods < 1) return -1;
 
     uint8_t methods[255];
 
@@ -70,10 +68,8 @@ int handle_socks5_greeting(int client_fd)
 
     if (!auth_ok) {
         uint8_t resp[2] = {0x05, NO_ACCEPTABLE_METHODS};
-
         LOG("AUTH:\n\tVER: %#x\n\tMETHOD: %#x\n", resp[0], resp[1]);
-
-        send(client_fd, resp, 2, 0);
+        send(client_fd, resp, sizeof(resp), 0);
         return -1;
     }
 
